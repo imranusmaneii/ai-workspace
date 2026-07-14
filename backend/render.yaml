@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: ai-workspace-backend
+    name: noir-ai-backend
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -15,7 +15,7 @@ services:
         value: "false"
       - key: APP_CORS_ORIGINS
         sync: false
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
       - key: CHROMA_HOST
         value: ""

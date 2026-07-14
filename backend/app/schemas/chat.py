@@ -5,8 +5,8 @@ from uuid import UUID
 
 class ChatCreate(BaseModel):
     title: str = "New Chat"
-    model_provider: str = "openai"
-    model_name: str = "gpt-4o"
+    model_provider: str = "gemini"
+    model_name: str = "gemini-1.5-flash"
 
 
 class ChatUpdate(BaseModel):
