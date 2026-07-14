@@ -33,7 +33,7 @@ export default function HomePage() {
       <div className="mx-auto max-w-4xl p-6">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">AI Workspace</h1>
+            <h1 className="text-3xl font-bold">Noir AI</h1>
             <p className="mt-2 text-muted-foreground">Your intelligent workspace for conversations and documents</p>
           </div>
           <button onClick={() => createWorkspace.mutate()} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">

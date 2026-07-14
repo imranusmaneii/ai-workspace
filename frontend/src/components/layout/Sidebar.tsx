@@ -77,7 +77,7 @@ export default function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         <Link href="/" className="font-semibold">
-          AI Workspace
+          Noir AI
         </Link>
         <button
           onClick={() => setMobileOpen(false)}

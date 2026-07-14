@@ -6,7 +6,7 @@ import { Providers } from "./providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AI Workspace",
+  title: "Noir AI",
   description: "Your intelligent AI workspace",
 };
 
