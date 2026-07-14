@@ -14,20 +14,29 @@ import { ArrowLeft, Send, Copy, Check } from "lucide-react";
 export default function ChatPage({
   params,
 }: {
-  params: { workspaceId: string; chatId: string };
+  params: Promise<{ workspaceId: string; chatId: string }>;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [resolvedParams, setResolvedParams] = useState<{ workspaceId: string; chatId: string } | null>(null);
+
+  useEffect(() => {
+    params.then(setResolvedParams);
+  }, [params]);
+
+  const workspaceId = resolvedParams?.workspaceId ?? "";
+  const chatId = resolvedParams?.chatId ?? "";
 
   const { data: messages, isLoading: messagesLoading } = useQuery<Message[]>({
-    queryKey: ["messages", params.chatId],
+    queryKey: ["messages", chatId],
     queryFn: async () => {
-      const { data } = await api.get(`/chats/${params.chatId}/messages`);
+      const { data } = await api.get(`/chats/${chatId}/messages`);
       return data;
     },
+    enabled: !!chatId,
   });
 
   const sendMessage = useMutation({
@@ -40,12 +49,12 @@ export default function ChatPage({
       };
 
       queryClient.setQueryData<Message[]>(
-        ["messages", params.chatId],
+        ["messages", chatId],
         (old) => [...(old || []), userMsg]
       );
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/chats/${params.chatId}/messages`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"}/chats/${chatId}/messages`,
         {
           method: "POST",
           headers: {
@@ -66,7 +75,7 @@ export default function ChatPage({
       };
 
       queryClient.setQueryData<Message[]>(
-        ["messages", params.chatId],
+        ["messages", chatId],
         (old) => [...(old || []), assistantMsg]
       );
 
@@ -89,7 +98,7 @@ export default function ChatPage({
                 if (data.type === "content") {
                   accumulated += data.content;
                   queryClient.setQueryData<Message[]>(
-                    ["messages", params.chatId],
+                    ["messages", chatId],
                     (old) => {
                       if (!old) return old;
                       const updated = [...old];
@@ -110,7 +119,7 @@ export default function ChatPage({
       return accumulated;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["messages", params.chatId] });
+      queryClient.invalidateQueries({ queryKey: ["messages", chatId] });
     },
   });
 
@@ -136,12 +145,19 @@ export default function ChatPage({
     }
   };
 
+  if (!resolvedParams) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="flex items-center gap-3 border-b border-border px-4 py-3">
         <button
-          onClick={() => router.push(`/workspace/${params.workspaceId}`)}
+          onClick={() => router.push(`/workspace/${workspaceId}`)}
           className="rounded p-1 hover:bg-muted"
         >
           <ArrowLeft size={18} />
@@ -149,7 +165,6 @@ export default function ChatPage({
         <h1 className="text-sm font-medium">Chat</h1>
       </div>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {messagesLoading ? (
           <div className="flex h-full items-center justify-center">
@@ -170,12 +185,8 @@ export default function ChatPage({
         )}
       </div>
 
-      {/* Composer */}
       <div className="border-t border-border p-4">
-        <form
-          onSubmit={handleSubmit}
-          className="mx-auto max-w-3xl"
-        >
+        <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
           <div className="flex items-end gap-2 rounded-xl border border-border bg-background p-2">
             <textarea
               ref={inputRef}

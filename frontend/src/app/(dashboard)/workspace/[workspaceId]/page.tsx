@@ -1,45 +1,50 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { Workspace } from "@/types";
-import { MessageSquare, FileText, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { FileText, Plus, Trash2, ArrowLeft } from "lucide-react";
 
 export default function WorkspacePage({
   params,
 }: {
-  params: { workspaceId: string };
+  params: Promise<{ workspaceId: string }>;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [workspaceId, setWorkspaceId] = useState<string>("");
+
+  useEffect(() => {
+    params.then((p) => setWorkspaceId(p.workspaceId));
+  }, [params]);
 
   const { data: workspace } = useQuery<Workspace>({
-    queryKey: ["workspace", params.workspaceId],
+    queryKey: ["workspace", workspaceId],
     queryFn: async () => {
-      const { data } = await api.get(`/workspaces/${params.workspaceId}`);
+      const { data } = await api.get(`/workspaces/${workspaceId}`);
       return data;
     },
+    enabled: !!workspaceId,
   });
 
   const { data: documents } = useQuery({
-    queryKey: ["documents", params.workspaceId],
+    queryKey: ["documents", workspaceId],
     queryFn: async () => {
-      const { data } = await api.get(
-        `/workspaces/${params.workspaceId}/documents`
-      );
+      const { data } = await api.get(`/workspaces/${workspaceId}/documents`);
       return data;
     },
+    enabled: !!workspaceId,
   });
 
   const { data: memories } = useQuery({
-    queryKey: ["memories", params.workspaceId],
+    queryKey: ["memories", workspaceId],
     queryFn: async () => {
-      const { data } = await api.get(
-        `/workspaces/${params.workspaceId}/memories`
-      );
+      const { data } = await api.get(`/workspaces/${workspaceId}/memories`);
       return data;
     },
+    enabled: !!workspaceId,
   });
 
   const uploadMutation = useMutation({
@@ -47,29 +52,23 @@ export default function WorkspacePage({
       const formData = new FormData();
       formData.append("file", file);
       const { data } = await api.post(
-        `/workspaces/${params.workspaceId}/documents`,
+        `/workspaces/${workspaceId}/documents`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["documents", params.workspaceId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["documents", workspaceId] });
     },
   });
 
   const deleteDocMutation = useMutation({
     mutationFn: async (docId: string) => {
-      await api.delete(
-        `/workspaces/${params.workspaceId}/documents/${docId}`
-      );
+      await api.delete(`/workspaces/${workspaceId}/documents/${docId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["documents", params.workspaceId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["documents", workspaceId] });
     },
   });
 
@@ -83,6 +82,14 @@ export default function WorkspacePage({
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
+
+  if (!workspaceId) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-4xl p-6">
@@ -101,7 +108,6 @@ export default function WorkspacePage({
         )}
       </div>
 
-      {/* Documents */}
       <section className="mb-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -153,7 +159,6 @@ export default function WorkspacePage({
         )}
       </section>
 
-      {/* Memory */}
       <section>
         <h2 className="mb-4 text-lg font-semibold">Memory</h2>
         {memories && memories.length > 0 ? (
