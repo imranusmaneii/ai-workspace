@@ -6,16 +6,29 @@ from app.models.user import User
 from app.schemas.auth import (
     UserRegister, UserLogin, GoogleAuth, AuthResponse,
     TokenResponse, RefreshRequest, UserResponse, UserUpdate,
+    VerifyEmailRequest, ResendCodeRequest, RegisterResponse,
 )
 from app.services.auth_service import AuthService, UserService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", response_model=AuthResponse)
+@router.post("/register", response_model=RegisterResponse)
 async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
     service = AuthService(db)
     return await service.register(data)
+
+
+@router.post("/verify-email", response_model=AuthResponse)
+async def verify_email(data: VerifyEmailRequest, db: AsyncSession = Depends(get_db)):
+    service = AuthService(db)
+    return await service.verify_email(data.email, data.code)
+
+
+@router.post("/resend-code")
+async def resend_code(data: ResendCodeRequest, db: AsyncSession = Depends(get_db)):
+    service = AuthService(db)
+    return await service.resend_code(data.email)
 
 
 @router.post("/login", response_model=AuthResponse)

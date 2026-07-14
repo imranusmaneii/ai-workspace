@@ -5,15 +5,26 @@ from app.core.config import get_settings
 from app.core.database import engine
 from app.api.v1.router import api_router
 from app.models.user import Base
-from app.models import workspace, chat, message, document, memory
+from app.models import workspace, chat, message, document, memory, verification
+import sqlalchemy
 
 settings = get_settings()
+
+
+async def _migrate_columns(conn):
+    try:
+        await conn.execute(sqlalchemy.text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE"
+        ))
+    except Exception:
+        pass
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await _migrate_columns(conn)
     yield
 
 

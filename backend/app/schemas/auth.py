@@ -18,6 +18,20 @@ class GoogleAuth(BaseModel):
     id_token: str
 
 
+class VerifyEmailRequest(BaseModel):
+    email: EmailStr
+    code: str
+
+
+class ResendCodeRequest(BaseModel):
+    email: EmailStr
+
+
+class RegisterResponse(BaseModel):
+    message: str
+    email: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -34,6 +48,7 @@ class UserResponse(BaseModel):
     name: str | None
     avatar_url: str | None
     auth_provider: str
+    email_verified: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}

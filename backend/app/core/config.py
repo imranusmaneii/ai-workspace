@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     CHROMA_PORT: int = 8001
     CHROMA_COLLECTION: str = "ai_workspace"
 
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = "Noir AI <onboarding@resend.dev>"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

@@ -4,6 +4,7 @@ export interface User {
   name: string | null;
   avatar_url: string | null;
   auth_provider: string;
+  email_verified: boolean;
   created_at: string;
 }
 
