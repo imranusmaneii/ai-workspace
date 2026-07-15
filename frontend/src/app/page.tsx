@@ -1,16 +1,19 @@
 "use client";
 
-import AppShell from "@/components/layout/AppShell";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import api from "@/lib/api";
 import { Workspace } from "@/types";
-import { Plus, MessageSquare, FileText, ArrowRight } from "lucide-react";
+import { Send, Paperclip } from "lucide-react";
 
 export default function HomePage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const [input, setInput] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { data: workspaces, isLoading } = useQuery<Workspace[]>({
+  const { data: workspaces } = useQuery<Workspace[]>({
     queryKey: ["workspaces"],
     queryFn: async () => {
       const { data } = await api.get("/workspaces");
@@ -18,60 +21,98 @@ export default function HomePage() {
     },
   });
 
-  const createWorkspace = useMutation({
-    mutationFn: async () => {
-      const { data } = await api.post("/workspaces", { name: "My Workspace" });
-      return data;
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const sendMessage = useMutation({
+    mutationFn: async (message: string) => {
+      let ws = workspaces?.[0];
+      if (!ws) {
+        const { data: newWs } = await api.post("/workspaces", { name: "My Workspace" });
+        ws = newWs;
+        queryClient.setQueryData<Workspace[]>(["workspaces"], (old) => [...(old || []), newWs]);
+      }
+      if (!ws) throw new Error("No workspace");
+      const { data: chat } = await api.post(`/workspaces/${ws.id}/chats`, { title: message.slice(0, 80) });
+      return { wsId: ws.id, chatId: chat.id, message };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    onSuccess: ({ wsId, chatId, message }) => {
+      sessionStorage.setItem(`pending_message_${chatId}`, message);
+      router.push(`/workspace/${wsId}/chat/${chatId}`);
     },
   });
 
-  return (
-    <AppShell>
-      <div className="mx-auto max-w-4xl p-6">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Noir AI</h1>
-            <p className="mt-2 text-muted-foreground">Your intelligent workspace for conversations and documents</p>
-          </div>
-          <button onClick={() => createWorkspace.mutate()} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-            <Plus size={16} />
-            New Workspace
-          </button>
-        </div>
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || sendMessage.isPending) return;
+    sendMessage.mutate(input.trim());
+    setInput("");
+  };
 
-        {isLoading ? (
-          <div className="flex h-40 items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        ) : workspaces && workspaces.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {workspaces.map((ws) => (
-              <Link key={ws.id} href={`/workspace/${ws.id}`} className="group rounded-xl border border-border p-6 transition-colors hover:border-primary/50 hover:bg-muted/50">
-                <h3 className="text-lg font-semibold">{ws.name}</h3>
-                {ws.description && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{ws.description}</p>}
-                <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><MessageSquare size={12} />{ws.chat_count} chats</span>
-                  <span className="flex items-center gap-1"><FileText size={12} />{ws.document_count} docs</span>
-                </div>
-                <div className="mt-4 flex items-center gap-1 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                  Open workspace <ArrowRight size={12} />
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-border p-12 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <Plus size={24} className="text-muted-foreground" />
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  const adjustHeight = () => {
+    const el = inputRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 200) + "px";
+    }
+  };
+
+  return (
+    <div className="flex h-screen flex-col bg-background">
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-2xl">
+          <h1 className="text-3xl font-semibold text-center mb-8 text-foreground">
+            What can I help with?
+          </h1>
+
+          <form onSubmit={handleSubmit}>
+            <div className="relative rounded-2xl border border-border bg-background shadow-sm focus-within:border-primary/50 transition-colors">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
+                onKeyDown={handleKeyDown}
+                placeholder="Message Noir AI..."
+                rows={1}
+                className="w-full resize-none bg-transparent px-4 py-4 pr-24 text-sm outline-none placeholder:text-muted-foreground"
+                style={{ minHeight: "52px", maxHeight: "200px" }}
+              />
+              <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg p-2 text-muted-foreground hover:bg-muted transition-colors"
+                  title="Attach file"
+                >
+                  <Paperclip size={18} />
+                </button>
+                <button
+                  type="submit"
+                  disabled={!input.trim() || sendMessage.isPending}
+                  className="rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  {sendMessage.isPending ? (
+                    <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  ) : (
+                    <Send size={18} />
+                  )}
+                </button>
+              </div>
             </div>
-            <h3 className="text-lg font-semibold">No workspaces yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Create your first workspace to get started</p>
-          </div>
-        )}
+          </form>
+
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            Noir AI can make mistakes. Check important info.
+          </p>
+        </div>
       </div>
-    </AppShell>
+    </div>
   );
 }

@@ -9,7 +9,7 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
 import api from "@/lib/api";
 import { Message } from "@/types";
-import { ArrowLeft, Send, Copy, Check } from "lucide-react";
+import { Send, Copy, Check, Menu, Paperclip } from "lucide-react";
 
 export default function ChatPage({
   params,
@@ -22,6 +22,7 @@ export default function ChatPage({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [resolvedParams, setResolvedParams] = useState<{ workspaceId: string; chatId: string } | null>(null);
+  const pendingSentRef = useRef(false);
 
   useEffect(() => { params.then(setResolvedParams); }, [params]);
 
@@ -80,6 +81,17 @@ export default function ChatPage({
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["messages", chatId] }),
   });
 
+  // Send pending message from home page
+  useEffect(() => {
+    if (!chatId || pendingSentRef.current) return;
+    const pending = sessionStorage.getItem(`pending_message_${chatId}`);
+    if (pending) {
+      sessionStorage.removeItem(`pending_message_${chatId}`);
+      pendingSentRef.current = true;
+      sendMessage.mutate(pending);
+    }
+  }, [chatId, sendMessage]);
+
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
   useEffect(() => { inputRef.current?.focus(); }, []);
 
@@ -94,34 +106,91 @@ export default function ChatPage({
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e); }
   };
 
+  const adjustHeight = () => {
+    const el = inputRef.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 200) + "px";
+    }
+  };
+
   if (!resolvedParams) return <div className="flex h-full items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>;
 
+  const hasMessages = messages && messages.length > 0;
+
   return (
-    <div className="flex h-screen flex-col">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <button onClick={() => router.push(`/workspace/${workspaceId}`)} className="rounded p-1 hover:bg-muted"><ArrowLeft size={18} /></button>
-        <h1 className="text-sm font-medium">Chat</h1>
+    <div className="flex h-screen flex-col bg-background">
+      {/* Minimal top bar */}
+      <div className="flex items-center justify-between px-4 py-2">
+        <div className="w-8" />
+        <h1 className="text-sm font-medium text-muted-foreground truncate max-w-md">
+          {messages?.[0]?.role === "user" ? messages[0].content.slice(0, 60) : "New Chat"}
+        </h1>
+        <div className="w-8" />
       </div>
+
+      {/* Messages or empty state */}
       <div className="flex-1 overflow-y-auto">
         {messagesLoading ? (
-          <div className="flex h-full items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>
-        ) : messages && messages.length > 0 ? (
-          <div className="mx-auto max-w-3xl space-y-6 p-4">
+          <div className="flex h-full items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : hasMessages ? (
+          <div className="mx-auto max-w-3xl space-y-6 p-4 pb-32">
             {messages.map((msg) => <MessageBubble key={msg.id} message={msg} />)}
+            {sendMessage.isPending && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl bg-muted px-4 py-3">
+                  <div className="flex gap-1">
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:-0.3s]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40 [animation-delay:-0.15s]" />
+                    <span className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground/40" />
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         ) : (
           <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-            <p className="text-lg">Start a conversation</p>
-            <p className="mt-1 text-sm">Type a message below to begin</p>
+            {!sendMessage.isPending && (
+              <>
+                <p className="text-lg font-medium">Start a conversation</p>
+                <p className="mt-1 text-sm">Type a message below to begin</p>
+              </>
+            )}
           </div>
         )}
       </div>
-      <div className="border-t border-border p-4">
+
+      {/* Input bar - fixed at bottom center */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-background via-background to-transparent pt-8 pb-4 px-4">
         <form onSubmit={handleSubmit} className="mx-auto max-w-3xl">
-          <div className="flex items-end gap-2 rounded-xl border border-border bg-background p-2">
-            <textarea ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type a message..." rows={1} className="flex-1 resize-none bg-transparent px-2 py-1 text-sm outline-none placeholder:text-muted-foreground" style={{ minHeight: "24px", maxHeight: "120px" }} />
-            <button type="submit" disabled={!input.trim() || sendMessage.isPending} className="rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"><Send size={16} /></button>
+          <div className="flex items-end gap-2 rounded-2xl border border-border bg-background p-2 shadow-lg focus-within:border-primary/50 transition-colors">
+            <button
+              type="button"
+              className="rounded-lg p-2 text-muted-foreground hover:bg-muted transition-colors shrink-0"
+              title="Attach file"
+            >
+              <Paperclip size={18} />
+            </button>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
+              onKeyDown={handleKeyDown}
+              placeholder="Message Noir AI..."
+              rows={1}
+              className="flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground"
+              style={{ minHeight: "24px", maxHeight: "120px" }}
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || sendMessage.isPending}
+              className="rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0"
+            >
+              <Send size={16} />
+            </button>
           </div>
         </form>
       </div>
@@ -139,7 +208,7 @@ function MessageBubble({ message }: { message: Message }) {
         {message.role === "assistant" ? (
           <div className="markdown-content text-sm">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-              code({ className, children, ...props }) {
+              code({ className, children, ...props }: { className?: string; children?: React.ReactNode; [key: string]: any }) {
                 const match = /language-(\w+)/.exec(className || "");
                 const codeStr = String(children).replace(/\n$/, "");
                 if (match) return (
