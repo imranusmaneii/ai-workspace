@@ -27,7 +27,7 @@ class GeminiProvider(LLMProvider):
             role = "user" if m.role == "user" else "model"
             history.append({"role": role, "parts": [m.content]})
         chat = gen_model.start_chat(history=history)
-        async for chunk in await chat.send_message_stream_async(messages[-1].content):
+        async for chunk in chat.send_message_stream_async(messages[-1].content):
             if chunk.text:
                 yield chunk.text
 
