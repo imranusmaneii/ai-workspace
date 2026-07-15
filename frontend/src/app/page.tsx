@@ -12,6 +12,7 @@ export default function HomePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
+  const [error, setError] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: workspaces } = useQuery<Workspace[]>({
@@ -28,6 +29,7 @@ export default function HomePage() {
 
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
+      setError("");
       let ws = workspaces?.[0];
       if (!ws) {
         const { data: newWs } = await api.post("/workspaces", { name: "My Workspace" });
@@ -42,13 +44,18 @@ export default function HomePage() {
       sessionStorage.setItem(`pending_message_${chatId}`, message);
       router.push(`/workspace/${wsId}/chat/${chatId}`);
     },
+    onError: (err: any) => {
+      const msg = err?.response?.data?.detail || err?.message || "Something went wrong";
+      setError(msg);
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || sendMessage.isPending) return;
-    sendMessage.mutate(input.trim());
+    const msg = input.trim();
     setInput("");
+    sendMessage.mutate(msg);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -80,7 +87,7 @@ export default function HomePage() {
               <textarea
                 ref={inputRef}
                 value={input}
-                onChange={(e) => { setInput(e.target.value); adjustHeight(); }}
+                onChange={(e) => { setInput(e.target.value); setError(""); adjustHeight(); }}
                 onKeyDown={handleKeyDown}
                 placeholder="Message Noir AI..."
                 rows={1}
@@ -109,6 +116,10 @@ export default function HomePage() {
               </div>
             </div>
           </form>
+
+          {error && (
+            <p className="text-center text-sm text-destructive mt-3">{error}</p>
+          )}
 
           <p className="text-center text-xs text-muted-foreground mt-4">
             Noir AI can make mistakes. Check important info.

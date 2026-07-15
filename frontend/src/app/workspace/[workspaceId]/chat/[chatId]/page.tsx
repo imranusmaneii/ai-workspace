@@ -100,15 +100,18 @@ export default function ChatPage({
   });
 
   // Send pending message from home page
+  const sendMessageRef = useRef(sendMessage);
+  sendMessageRef.current = sendMessage;
+
   useEffect(() => {
     if (!chatId || pendingSentRef.current) return;
     const pending = sessionStorage.getItem(`pending_message_${chatId}`);
     if (pending) {
       sessionStorage.removeItem(`pending_message_${chatId}`);
       pendingSentRef.current = true;
-      sendMessage.mutate(pending);
+      setTimeout(() => sendMessageRef.current.mutate(pending), 0);
     }
-  }, [chatId, sendMessage]);
+  }, [chatId]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
   useEffect(() => { inputRef.current?.focus(); }, []);
