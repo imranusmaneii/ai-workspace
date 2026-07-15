@@ -1,3 +1,5 @@
+import json
+import logging
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +12,7 @@ from app.services.chat_service import ChatService, MessageService
 from app.utils.chat import stream_chat_response, generate_chat_response
 from app.llm.base import ChatMessage
 
+logger = logging.getLogger("noir_ai.chats")
 router = APIRouter(tags=["chats"])
 
 
@@ -108,6 +111,8 @@ async def send_message(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    logger.info(f"Message received: chat_id={chat_id}, stream={data.stream}, content_len={len(data.content)}")
+
     msg_service = MessageService(db)
     user_msg = await msg_service.create_user_message(chat_id, data.content)
     chat = await ChatService(db).get_by_id(chat_id)
@@ -115,27 +120,35 @@ async def send_message(
     history = await msg_service.get_last_n(chat_id, n=20)
     messages = [ChatMessage(role=m.role, content=m.content) for m in history]
 
+    logger.info(f"Chat config: provider={chat.model_provider}, model={chat.model_name}, history={len(messages)}")
+
     if data.stream:
         async def stream_and_save():
             full_response = ""
-            async for chunk in stream_chat_response(
-                messages=messages,
-                model_provider=chat.model_provider,
-                model_name=chat.model_name,
-                workspace_id=str(chat.workspace_id),
-                rag_query=data.content,
-            ):
-                yield chunk
-                try:
-                    import json as _json
-                    parsed = chunk.removeprefix("data: ").strip()
-                    if parsed:
-                        event = _json.loads(parsed)
-                        if event.get("type") == "content":
-                            full_response += event.get("content", "")
-                except Exception:
-                    pass
+            try:
+                async for chunk in stream_chat_response(
+                    messages=messages,
+                    model_provider=chat.model_provider,
+                    model_name=chat.model_name,
+                    workspace_id=str(chat.workspace_id),
+                    rag_query=data.content,
+                ):
+                    yield chunk
+                    try:
+                        parsed = chunk.removeprefix("data: ").strip()
+                        if parsed:
+                            event = json.loads(parsed)
+                            if event.get("type") == "content":
+                                full_response += event.get("content", "")
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.error(f"Stream generator error: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
             if full_response:
+                logger.info(f"Saving assistant message: {len(full_response)} chars")
                 from app.core.database import async_session
                 async with async_session() as save_db:
                     await MessageService(save_db).create_assistant_message(
@@ -145,8 +158,19 @@ async def send_message(
                         model_name=chat.model_name,
                     )
                     await save_db.commit()
+            else:
+                logger.warning("No response content to save")
 
-        return StreamingResponse(stream_and_save(), media_type="text/event-stream")
+        return StreamingResponse(
+            stream_and_save(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+                "Content-Encoding": "identity",
+            },
+        )
 
     response = await generate_chat_response(
         messages=messages,

@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import AppShell from "@/components/layout/AppShell";
 import api from "@/lib/api";
+import Sidebar from "@/components/Sidebar";
 import { FileText, Plus, Trash2, ArrowLeft } from "lucide-react";
 
 export default function WorkspacePage({
@@ -65,53 +65,56 @@ export default function WorkspacePage({
   };
 
   return (
-    <AppShell>
-      <div className="mx-auto max-w-4xl p-6">
-        <button onClick={() => router.push("/")} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft size={14} /> Back
-        </button>
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold">{workspace?.name || "Workspace"}</h1>
-          {workspace?.description && <p className="mt-1 text-muted-foreground">{workspace.description}</p>}
-        </div>
-
-        <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2"><FileText size={18} /> Documents</h2>
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90">
-              <Plus size={14} /> Upload
-              <input type="file" className="hidden" accept=".pdf,.docx,.txt,.csv,.xlsx,.pptx,.png,.jpg,.jpeg,.py,.js,.ts,.tsx,.jsx" onChange={handleFileUpload} />
-            </label>
+    <div className="flex h-screen bg-background">
+      <Sidebar />
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-4xl p-6 pt-16">
+          <button onClick={() => router.push("/")} className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft size={14} /> Back
+          </button>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold tracking-tight">{workspace?.name || "Workspace"}</h1>
+            {workspace?.description && <p className="mt-1 text-muted-foreground text-sm">{workspace.description}</p>}
           </div>
-          {documents && documents.length > 0 ? (
-            <div className="space-y-2">
-              {documents.map((doc: any) => (
-                <div key={doc.id} className="flex items-center justify-between rounded-lg border border-border p-3">
-                  <div className="flex items-center gap-3">
-                    <FileText size={16} className="text-muted-foreground" />
-                    <div>
-                      <p className="text-sm font-medium">{doc.filename}</p>
-                      <p className="text-xs text-muted-foreground">{formatSize(doc.file_size)} · {doc.status} · {doc.chunk_count} chunks</p>
-                    </div>
-                  </div>
-                  <button onClick={() => deleteDocMutation.mutate(doc.id)} className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive"><Trash2 size={14} /></button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No documents uploaded yet</p>
-          )}
-        </section>
 
-        <section>
-          <h2 className="mb-4 text-lg font-semibold">Memory</h2>
-          {memories && memories.length > 0 ? (
-            <div className="space-y-2">{memories.map((mem: any) => <div key={mem.id} className="rounded-lg border border-border p-3 text-sm">{mem.content}</div>)}</div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No memories stored yet</p>
-          )}
-        </section>
+          <section className="mb-8">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2"><FileText size={18} /> Documents</h2>
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-r from-[#e8854a] to-[#c96f3a] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity">
+                <Plus size={14} /> Upload
+                <input type="file" className="hidden" accept=".pdf,.docx,.txt,.csv,.xlsx,.pptx,.png,.jpg,.jpeg,.py,.js,.ts,.tsx,.jsx" onChange={handleFileUpload} />
+              </label>
+            </div>
+            {documents && documents.length > 0 ? (
+              <div className="space-y-2">
+                {documents.map((doc: any) => (
+                  <div key={doc.id} className="flex items-center justify-between glass rounded-xl px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <FileText size={16} className="text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{doc.filename}</p>
+                        <p className="text-xs text-muted-foreground">{formatSize(doc.file_size)} · {doc.status} · {doc.chunk_count} chunks</p>
+                      </div>
+                    </div>
+                    <button onClick={() => deleteDocMutation.mutate(doc.id)} className="rounded-lg p-1.5 text-muted-foreground hover:bg-white/5 hover:text-red-400 transition-colors"><Trash2 size={14} /></button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground/60 glass rounded-xl p-8 text-center">No documents uploaded yet</p>
+            )}
+          </section>
+
+          <section>
+            <h2 className="mb-4 text-lg font-semibold">Memory</h2>
+            {memories && memories.length > 0 ? (
+              <div className="space-y-2">{memories.map((mem: any) => <div key={mem.id} className="glass rounded-xl px-4 py-3 text-sm">{mem.content}</div>)}</div>
+            ) : (
+              <p className="text-sm text-muted-foreground/60 glass rounded-xl p-8 text-center">No memories stored yet</p>
+            )}
+          </section>
+        </div>
       </div>
-    </AppShell>
+    </div>
   );
 }

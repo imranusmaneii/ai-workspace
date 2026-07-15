@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { AuthResponse } from "@/types";
+import { Sparkles } from "lucide-react";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -18,11 +19,8 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     const stored = sessionStorage.getItem("verify_email");
-    if (stored) {
-      setEmail(stored);
-    } else {
-      router.replace("/register");
-    }
+    if (stored) setEmail(stored);
+    else router.replace("/register");
   }, [router]);
 
   useEffect(() => {
@@ -37,18 +35,12 @@ export default function VerifyEmailPage() {
     const newCode = [...code];
     newCode[index] = value.slice(-1);
     setCode(newCode);
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-    if (newCode.every((c) => c) && newCode.join("").length === 6) {
-      handleVerify(newCode.join(""));
-    }
+    if (value && index < 5) inputRefs.current[index + 1]?.focus();
+    if (newCode.every((c) => c) && newCode.join("").length === 6) handleVerify(newCode.join(""));
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !code[index] && index > 0) inputRefs.current[index - 1]?.focus();
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -59,9 +51,7 @@ export default function VerifyEmailPage() {
       setCode(newCode);
       const nextEmpty = newCode.findIndex((c) => !c);
       inputRefs.current[nextEmpty === -1 ? 5 : nextEmpty]?.focus();
-      if (pasted.length === 6) {
-        handleVerify(pasted);
-      }
+      if (pasted.length === 6) handleVerify(pasted);
     }
   };
 
@@ -98,14 +88,19 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-6 animate-slide-up">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Noir AI</h1>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#e8854a] to-[#c96f3a]">
+              <Sparkles size={18} className="text-white" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Noir AI</h1>
           <p className="mt-2 text-sm text-muted-foreground">Check your email for the verification code</p>
-          {email && <p className="mt-1 text-xs text-muted-foreground">{email}</p>}
+          {email && <p className="mt-1 text-xs text-muted-foreground/60">{email}</p>}
         </div>
 
-        {error && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+        {error && <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400 text-center">{error}</div>}
 
         <div className="flex justify-center gap-2">
           {code.map((digit, i) => (
@@ -119,7 +114,7 @@ export default function VerifyEmailPage() {
               onChange={(e) => handleCodeChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
               onPaste={i === 0 ? handlePaste : undefined}
-              className="h-12 w-12 rounded-lg border border-input bg-background text-center text-lg font-medium outline-none focus:ring-2 focus:ring-ring"
+              className="h-12 w-12 rounded-xl glass bg-transparent border-none text-center text-lg font-medium outline-none focus:ring-2 focus:ring-[#e8854a]/30"
               disabled={loading}
             />
           ))}
@@ -127,23 +122,23 @@ export default function VerifyEmailPage() {
 
         {loading && (
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#e8854a] border-t-transparent" />
             Verifying...
           </div>
         )}
 
         <div className="text-center">
           {resendTimer > 0 ? (
-            <p className="text-sm text-muted-foreground">Resend code in {resendTimer}s</p>
+            <p className="text-sm text-muted-foreground/60">Resend code in {resendTimer}s</p>
           ) : (
-            <button onClick={handleResend} disabled={resending} className="text-sm text-primary hover:underline disabled:opacity-50">
+            <button onClick={handleResend} disabled={resending} className="text-sm text-[#e8854a] hover:underline disabled:opacity-50">
               {resending ? "Sending..." : "Resend code"}
             </button>
           )}
         </div>
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link href="/register" className="text-primary hover:underline">Back to sign up</Link>
+          <Link href="/register" className="text-[#e8854a] hover:underline">Back to sign up</Link>
         </p>
       </div>
     </div>

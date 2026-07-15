@@ -5,15 +5,14 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { Workspace } from "@/types";
-import { Send, Paperclip } from "lucide-react";
-import Sidebar from "@/components/layout/Sidebar";
+import Sidebar from "@/components/Sidebar";
+import ChatInput from "@/components/chat/ChatInput";
+import { Sparkles } from "lucide-react";
 
 export default function HomePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [input, setInput] = useState("");
   const [error, setError] = useState("");
-  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: workspaces } = useQuery<Workspace[]>({
     queryKey: ["workspaces"],
@@ -23,9 +22,8 @@ export default function HomePage() {
     },
   });
 
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
 
   const sendMessage = useMutation({
     mutationFn: async (message: string) => {
@@ -50,78 +48,36 @@ export default function HomePage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || sendMessage.isPending) return;
-    const msg = input.trim();
-    setInput("");
-    sendMessage.mutate(msg);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  };
-
-  const adjustHeight = () => {
-    const el = inputRef.current;
-    if (el) {
-      el.style.height = "auto";
-      el.style.height = Math.min(el.scrollHeight, 200) + "px";
-    }
-  };
-
   return (
     <div className="flex h-screen flex-col bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-2xl">
-          <h1 className="text-3xl font-semibold text-center mb-8 text-foreground">
-            What can I help with?
-          </h1>
-
-          <form onSubmit={handleSubmit}>
-            <div className="relative rounded-2xl border border-border bg-background shadow-sm focus-within:border-primary/50 transition-colors">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => { setInput(e.target.value); setError(""); adjustHeight(); }}
-                onKeyDown={handleKeyDown}
-                placeholder="Message Noir AI..."
-                rows={1}
-                className="w-full resize-none bg-transparent px-4 py-4 pr-24 text-sm outline-none placeholder:text-muted-foreground"
-                style={{ minHeight: "52px", maxHeight: "200px" }}
-              />
-              <div className="absolute right-3 bottom-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  className="rounded-lg p-2 text-muted-foreground hover:bg-muted transition-colors"
-                  title="Attach file"
-                >
-                  <Paperclip size={18} />
-                </button>
-                <button
-                  type="submit"
-                  disabled={!input.trim() || sendMessage.isPending}
-                  className="rounded-lg bg-primary p-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                >
-                  {sendMessage.isPending ? (
-                    <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                  ) : (
-                    <Send size={18} />
-                  )}
-                </button>
-              </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-24">
+        <div className="w-full max-w-2xl animate-slide-up">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#e8854a] to-[#c96f3a] shadow-lg shadow-[#e8854a]/20">
+              <Sparkles size={22} className="text-white" />
             </div>
-          </form>
+          </div>
+
+          <h1 className="text-3xl font-semibold text-center mb-2 text-foreground tracking-tight">
+            {greeting}, Imran
+          </h1>
+          <p className="text-center text-muted-foreground text-sm mb-10">
+            What would you like to build today?
+          </p>
+
+          <ChatInput
+            onSend={(msg) => sendMessage.mutate(msg)}
+            isLoading={sendMessage.isPending}
+          />
 
           {error && (
-            <p className="text-center text-sm text-destructive mt-3">{error}</p>
+            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-center text-sm text-red-400 animate-fade-in">
+              {error}
+            </div>
           )}
 
-          <p className="text-center text-xs text-muted-foreground mt-4">
+          <p className="text-center text-[11px] text-muted-foreground/40 mt-6">
             Noir AI can make mistakes. Check important info.
           </p>
         </div>

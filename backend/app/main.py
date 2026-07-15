@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -7,6 +8,12 @@ from app.api.v1.router import api_router
 from app.models.user import Base
 from app.models import workspace, chat, message, document, memory, verification
 import sqlalchemy
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+)
+logger = logging.getLogger("noir_ai")
 
 settings = get_settings()
 
@@ -22,10 +29,22 @@ async def _migrate_columns(conn):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Starting Noir AI backend...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await _migrate_columns(conn)
+    logger.info("Database initialized")
+
+    from app.llm.registry import get_provider
+    for name in ["gemini", "openai", "openrouter"]:
+        try:
+            get_provider(name)
+            logger.info(f"Provider '{name}' initialized OK")
+        except Exception as e:
+            logger.warning(f"Provider '{name}' unavailable: {e}")
+
     yield
+    logger.info("Shutting down Noir AI backend")
 
 
 app = FastAPI(

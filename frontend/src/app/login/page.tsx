@@ -6,6 +6,7 @@ import Link from "next/link";
 import api from "@/lib/api";
 import { AuthResponse } from "@/types";
 import GoogleSignInButton from "@/components/GoogleSignIn";
+import { Sparkles } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,9 +33,14 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6">
+      <div className="w-full max-w-sm space-y-6 animate-slide-up">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Noir AI</h1>
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#e8854a] to-[#c96f3a]">
+              <Sparkles size={18} className="text-white" />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight">Noir AI</h1>
           <p className="mt-2 text-sm text-muted-foreground">Sign in to your account</p>
         </div>
 
@@ -42,25 +48,25 @@ export default function LoginPage() {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">or</span></div>
+          <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground/60">or</span></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+          {error && <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">{error}</div>}
           <div>
-            <label className="mb-1 block text-sm font-medium">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" required />
+            <label className="mb-1.5 block text-sm font-medium">Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full glass rounded-xl bg-transparent border-none px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#e8854a]/30" required />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" required />
+            <label className="mb-1.5 block text-sm font-medium">Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full glass rounded-xl bg-transparent border-none px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#e8854a]/30" required />
           </div>
-          <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-[#e8854a] to-[#c96f3a] px-4 py-3 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-all shadow-lg shadow-[#e8854a]/20">
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account? <Link href="/register" className="text-primary hover:underline">Sign up</Link>
+          Don&apos;t have an account? <Link href="/register" className="text-[#e8854a] hover:underline">Sign up</Link>
         </p>
       </div>
     </div>
