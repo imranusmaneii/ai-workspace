@@ -116,16 +116,37 @@ async def send_message(
     messages = [ChatMessage(role=m.role, content=m.content) for m in history]
 
     if data.stream:
-        return StreamingResponse(
-            stream_chat_response(
+        async def stream_and_save():
+            full_response = ""
+            async for chunk in stream_chat_response(
                 messages=messages,
                 model_provider=chat.model_provider,
                 model_name=chat.model_name,
                 workspace_id=str(chat.workspace_id),
                 rag_query=data.content,
-            ),
-            media_type="text/event-stream",
-        )
+            ):
+                yield chunk
+                try:
+                    import json as _json
+                    parsed = chunk.removeprefix("data: ").strip()
+                    if parsed:
+                        event = _json.loads(parsed)
+                        if event.get("type") == "content":
+                            full_response += event.get("content", "")
+                except Exception:
+                    pass
+            if full_response:
+                from app.core.database import async_session
+                async with async_session() as save_db:
+                    await MessageService(save_db).create_assistant_message(
+                        chat_id=chat_id,
+                        content=full_response,
+                        model_provider=chat.model_provider,
+                        model_name=chat.model_name,
+                    )
+                    await save_db.commit()
+
+        return StreamingResponse(stream_and_save(), media_type="text/event-stream")
 
     response = await generate_chat_response(
         messages=messages,

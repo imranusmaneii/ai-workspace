@@ -53,6 +53,7 @@ export default function ChatPage({
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
+      let errored = false;
       if (reader) {
         while (true) {
           const { done, value } = await reader.read();
@@ -70,11 +71,28 @@ export default function ChatPage({
                     updated[updated.length - 1] = { ...updated[updated.length - 1], content: accumulated };
                     return updated;
                   });
+                } else if (data.type === "error") {
+                  errored = true;
+                  const errorMsg = data.content || "Something went wrong. Please check your API key and try again.";
+                  queryClient.setQueryData<Message[]>(["messages", chatId], (old) => {
+                    if (!old) return old;
+                    const updated = [...old];
+                    updated[updated.length - 1] = { ...updated[updated.length - 1], content: `Error: ${errorMsg}` };
+                    return updated;
+                  });
                 }
               } catch {}
             }
           }
         }
+      }
+      if (!accumulated && !errored) {
+        queryClient.setQueryData<Message[]>(["messages", chatId], (old) => {
+          if (!old) return old;
+          const updated = [...old];
+          updated[updated.length - 1] = { ...updated[updated.length - 1], content: "No response received. Please check your API configuration." };
+          return updated;
+        });
       }
       return accumulated;
     },
