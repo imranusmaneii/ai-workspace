@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { Workspace } from "@/types";
 import { Send, Paperclip } from "lucide-react";
+import Sidebar from "@/components/layout/Sidebar";
 
 export default function HomePage() {
   const router = useRouter();
@@ -67,6 +68,7 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen flex-col bg-background">
+      <Sidebar />
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-2xl">
           <h1 className="text-3xl font-semibold text-center mb-8 text-foreground">

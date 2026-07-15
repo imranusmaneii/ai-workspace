@@ -242,12 +242,15 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Hover trigger zone - thin strip on left edge */}
+      {/* Hamburger button - always on top when sidebar is closed */}
       {!isOpen && (
-        <div
-          className="fixed left-0 top-0 z-40 h-full w-12"
+        <button
+          onClick={toggleClick}
           onMouseEnter={handleMouseEnter}
-        />
+          className="fixed left-3 top-3 z-50 rounded-lg border border-border bg-background p-2 hover:bg-muted transition-colors shadow-sm"
+        >
+          <Menu size={18} />
+        </button>
       )}
 
       {/* Desktop: hover panel */}
@@ -259,16 +262,6 @@ export default function Sidebar() {
         >
           {sidebarContent}
         </div>
-      )}
-
-      {/* Click toggle button - visible when sidebar is closed */}
-      {!isOpen && (
-        <button
-          onClick={toggleClick}
-          className="fixed left-4 top-4 z-30 rounded-lg border border-border bg-background p-2 hover:bg-muted transition-colors"
-        >
-          <Menu size={18} />
-        </button>
       )}
 
       {/* Click-open panel (mobile + desktop) */}
