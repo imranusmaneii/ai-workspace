@@ -201,7 +201,7 @@ export default function ChatPage({
   if (!resolvedParams) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#e8854a] border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#dc2626] border-t-transparent" />
       </div>
     );
   }
@@ -215,7 +215,7 @@ export default function ChatPage({
       <div className="flex-1 overflow-y-auto">
         {messagesLoading ? (
           <div className="flex h-full items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#e8854a] border-t-transparent" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#dc2626] border-t-transparent" />
           </div>
         ) : hasMessages ? (
           <div className="mx-auto max-w-3xl space-y-6 p-4 pt-16 pb-36">

@@ -144,7 +144,7 @@ export default function Sidebar() {
         <div className="flex h-full w-[272px] flex-col sidebar-gradient border-r border-noir-border">
           <div className="flex items-center justify-between px-4 py-4">
             <Link href="/" className="flex items-center gap-2.5" onClick={() => setIsOpen(false)}>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#e8854a] to-[#c96f3a]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#dc2626] to-[#b91c1c]">
                 <Sparkles size={16} className="text-white" />
               </div>
               <span className="text-sm font-semibold tracking-tight">Noir AI</span>

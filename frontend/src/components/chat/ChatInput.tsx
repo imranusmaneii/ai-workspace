@@ -72,7 +72,7 @@ export default function ChatInput({ onSend, isLoading, onStop }: ChatInputProps)
               <button
                 type="submit"
                 disabled={!input.trim()}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#e8854a] to-[#c96f3a] text-white hover:opacity-90 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-md shadow-[#e8854a]/20"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#dc2626] to-[#b91c1c] text-white hover:opacity-90 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-md shadow-[#dc2626]/20"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m5 12 7-7 7 7" />

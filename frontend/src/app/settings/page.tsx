@@ -28,7 +28,7 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-muted-foreground">Name</label>
-                <input type="text" defaultValue={user?.name || ""} onBlur={(e) => { if (e.target.value !== user?.name) api.patch("/users/me", { name: e.target.value }); }} className="w-full glass rounded-xl bg-transparent border-none px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#e8854a]/30" />
+                <input type="text" defaultValue={user?.name || ""} onBlur={(e) => { if (e.target.value !== user?.name) api.patch("/users/me", { name: e.target.value }); }} className="w-full glass rounded-xl bg-transparent border-none px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#dc2626]/30" />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-muted-foreground">Email</label>

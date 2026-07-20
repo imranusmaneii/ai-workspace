@@ -54,7 +54,7 @@ export default function HomePage() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 pb-24">
         <div className="w-full max-w-2xl animate-slide-up">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#e8854a] to-[#c96f3a] shadow-lg shadow-[#e8854a]/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#dc2626] to-[#b91c1c] shadow-lg shadow-[#dc2626]/20">
               <Sparkles size={22} className="text-white" />
             </div>
           </div>

@@ -17,7 +17,7 @@ export default function Header() {
     <header className="flex h-14 items-center justify-between border-b border-border px-4">
       <div className="w-8 lg:w-0" />
       <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e8854a]/15 text-xs font-medium text-[#e8854a]">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#dc2626]/15 text-xs font-medium text-[#dc2626]">
           {user?.name?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
         </div>
       </div>

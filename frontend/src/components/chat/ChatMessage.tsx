@@ -39,11 +39,11 @@ export default function ChatMessage({ message, isLast, onRegenerate }: ChatMessa
     return (
       <div className="flex justify-end animate-slide-up">
         <div className="flex items-start gap-3 max-w-[80%]">
-          <div className="rounded-2xl bg-gradient-to-r from-[#e8854a]/10 to-[#c96f3a]/10 border border-[#e8854a]/10 px-5 py-3">
+          <div className="rounded-2xl bg-gradient-to-r from-[#dc2626]/10 to-[#b91c1c]/10 border border-[#dc2626]/10 px-5 py-3">
             <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
           </div>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8854a]/15 mt-0.5">
-            <User size={14} className="text-[#e8854a]" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dc2626]/15 mt-0.5">
+            <User size={14} className="text-[#dc2626]" />
           </div>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function ChatMessage({ message, isLast, onRegenerate }: ChatMessa
   return (
     <div className="flex justify-start animate-slide-up">
       <div className="flex items-start gap-3 max-w-[85%]">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#e8854a] to-[#c96f3a] mt-0.5 shadow-md shadow-[#e8854a]/20">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#dc2626] to-[#b91c1c] mt-0.5 shadow-md shadow-[#dc2626]/20">
           <span className="text-xs font-bold text-white">N</span>
         </div>
 
@@ -114,7 +114,7 @@ export default function ChatMessage({ message, isLast, onRegenerate }: ChatMessa
                       );
                     }
                     return (
-                      <code className="rounded-md bg-white/5 px-1.5 py-0.5 text-[13px] text-[#e8854a] font-mono" {...props}>
+                      <code className="rounded-md bg-white/5 px-1.5 py-0.5 text-[13px] text-[#dc2626] font-mono" {...props}>
                         {codeStr}
                       </code>
                     );

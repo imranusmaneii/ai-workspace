@@ -57,6 +57,9 @@ class MessageService:
     async def list_by_chat(self, chat_id: UUID, limit: int = 50, offset: int = 0) -> list[Message]:
         return await self.message_repo.list_by_chat(chat_id, limit, offset)
 
+    async def get_last_n(self, chat_id: UUID, n: int = 20) -> list[Message]:
+        return await self.message_repo.get_last_n(chat_id, n)
+
     async def get_by_id(self, message_id: UUID) -> Message:
         msg = await self.message_repo.get_by_id(message_id)
         if not msg:

@@ -80,7 +80,7 @@ export default function WorkspacePage({
           <section className="mb-8">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold flex items-center gap-2"><FileText size={18} /> Documents</h2>
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-r from-[#e8854a] to-[#c96f3a] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-r from-[#dc2626] to-[#b91c1c] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 transition-opacity">
                 <Plus size={14} /> Upload
                 <input type="file" className="hidden" accept=".pdf,.docx,.txt,.csv,.xlsx,.pptx,.png,.jpg,.jpeg,.py,.js,.ts,.tsx,.jsx" onChange={handleFileUpload} />
               </label>

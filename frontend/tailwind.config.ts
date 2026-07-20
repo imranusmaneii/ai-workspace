@@ -40,8 +40,8 @@ const config: Config = {
           card: "#1f1f1f",
           surface: "#262626",
           border: "#2e2e2e",
-          orange: "#e8854a",
-          "orange-dim": "#c96f3a",
+          red: "#dc2626",
+          "red-dim": "#b91c1c",
         },
       },
       borderRadius: {
