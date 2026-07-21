@@ -21,7 +21,15 @@ import {
   Check,
   Sparkles,
   Home,
+  LogIn,
+  Zap,
+  Crown,
+  Building2,
 } from "lucide-react";
+
+function isAuthenticated(): boolean {
+  return !!localStorage.getItem("access_token");
+}
 
 export default function Sidebar() {
   const router = useRouter();
@@ -31,7 +39,12 @@ export default function Sidebar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [authed, setAuthed] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setAuthed(isAuthenticated());
+  }, []);
 
   const { data: workspaces } = useQuery<Workspace[]>({
     queryKey: ["workspaces"],
@@ -39,6 +52,7 @@ export default function Sidebar() {
       const { data } = await api.get("/workspaces");
       return data;
     },
+    enabled: authed,
   });
 
   const currentWorkspace = workspaces?.[0];
@@ -50,7 +64,7 @@ export default function Sidebar() {
       const { data } = await api.get(`/workspaces/${currentWorkspace.id}/chats`);
       return data;
     },
-    enabled: !!currentWorkspace,
+    enabled: !!currentWorkspace && authed,
   });
 
   const createChat = useMutation({
@@ -82,7 +96,10 @@ export default function Sidebar() {
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
-    router.push("/login");
+    localStorage.removeItem("noir_message_count");
+    setAuthed(false);
+    router.push("/");
+    setIsOpen(false);
   };
 
   const filteredChats = chats?.filter((c) =>
@@ -115,9 +132,10 @@ export default function Sidebar() {
     }
   }, [isOpen]);
 
-  const navItems = [
-    { icon: Home, label: "Home", href: "/" },
-    { icon: Plus, label: "New Chat", action: () => createChat.mutate(), disabled: !currentWorkspace },
+  const plans = [
+    { name: "Free", icon: Zap, price: "$0", features: ["10 messages per chat", "Basic models", "Standard speed"], current: true },
+    { name: "Pro", icon: Crown, price: "$19/mo", features: ["Unlimited messages", "All models", "Priority support"], current: false },
+    { name: "Enterprise", icon: Building2, price: "$49/mo", features: ["Everything in Pro", "Custom models", "Team workspace", "API access"], current: false },
   ];
 
   return (
@@ -157,113 +175,146 @@ export default function Sidebar() {
             </button>
           </div>
 
-          <div className="px-3 mb-3">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => {
-                  if (item.action) item.action();
-                  else {
-                    router.push(item.href!);
-                    setIsOpen(false);
-                  }
-                }}
-                disabled={item.disabled}
-                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-150 disabled:opacity-40"
-              >
-                <item.icon size={16} />
-                {item.label}
-              </button>
-            ))}
-          </div>
+          {authed ? (
+            <>
+              <div className="px-3 mb-3">
+                <button
+                  onClick={() => {
+                    createChat.mutate();
+                  }}
+                  disabled={!currentWorkspace}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all duration-150 disabled:opacity-40"
+                >
+                  <Plus size={16} />
+                  New Chat
+                </button>
+              </div>
 
-          <div className="px-3 mb-2">
-            <div className="relative">
-              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
-              <input
-                type="text"
-                placeholder="Search chats..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg bg-white/[0.04] border border-white/[0.04] pl-8 pr-3 py-1.5 text-xs outline-none focus:border-white/10 transition-colors placeholder:text-muted-foreground/40"
-              />
-            </div>
-          </div>
+              <div className="px-3 mb-2">
+                <div className="relative">
+                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60" />
+                  <input
+                    type="text"
+                    placeholder="Search chats..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-lg bg-white/[0.04] border border-white/[0.04] pl-8 pr-3 py-1.5 text-xs outline-none focus:border-white/10 transition-colors placeholder:text-muted-foreground/40"
+                  />
+                </div>
+              </div>
 
-          {currentWorkspace && (
-            <div className="px-3 mb-1">
-              <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground/60 uppercase tracking-wider">
-                <FolderOpen size={12} />
-                {currentWorkspace.name}
+              {currentWorkspace && (
+                <div className="px-3 mb-1">
+                  <div className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground/60 uppercase tracking-wider">
+                    <FolderOpen size={12} />
+                    {currentWorkspace.name}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto px-3 pb-2">
+                <div className="space-y-0.5">
+                  {filteredChats?.map((chat) => (
+                    <div
+                      key={chat.id}
+                      className={`group flex items-center rounded-lg px-2.5 py-2 text-sm transition-all duration-150 ${
+                        pathname.includes(chat.id)
+                          ? "bg-white/[0.06] text-foreground"
+                          : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                      }`}
+                    >
+                      {editingChatId === chat.id ? (
+                        <div className="flex w-full items-center gap-1">
+                          <input
+                            autoFocus
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") submitRename();
+                              if (e.key === "Escape") setEditingChatId(null);
+                            }}
+                            className="flex-1 bg-transparent text-xs outline-none"
+                          />
+                          <button onClick={submitRename} className="rounded p-0.5 hover:bg-white/10"><Check size={12} /></button>
+                        </div>
+                      ) : (
+                        <>
+                          <MessageSquare size={14} className="shrink-0 opacity-50" />
+                          <Link
+                            href={`/workspace/${currentWorkspace?.id}/chat/${chat.id}`}
+                            onClick={() => setIsOpen(false)}
+                            className="flex-1 truncate px-2.5 text-[13px]"
+                          >
+                            {chat.title}
+                          </Link>
+                          <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
+                            <button onClick={() => startRename(chat)} className="rounded p-1 hover:bg-white/10"><Pencil size={11} /></button>
+                            <button onClick={() => { if (confirm("Delete this chat?")) deleteChat.mutate(chat.id); }} className="rounded p-1 hover:bg-white/10 hover:text-red-400"><Trash2 size={11} /></button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  {filteredChats?.length === 0 && (
+                    <p className="px-3 py-4 text-xs text-center text-muted-foreground/40">No chats yet</p>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+              <p className="text-sm text-muted-foreground mb-4">Sign in to access your chats and history</p>
+              <div className="flex flex-col gap-2 w-full">
+                <button onClick={() => { router.push("/login"); setIsOpen(false); }} className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#dc2626] to-[#b91c1c] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-all">
+                  <LogIn size={14} /> Sign In
+                </button>
+                <button onClick={() => { router.push("/register"); setIsOpen(false); }} className="flex items-center justify-center gap-2 glass rounded-xl px-4 py-2.5 text-sm font-medium text-foreground hover:bg-white/[0.06] transition-all">
+                  Sign Up Free
+                </button>
               </div>
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto px-3 pb-2">
-            <div className="space-y-0.5">
-              {filteredChats?.map((chat) => (
-                <div
-                  key={chat.id}
-                  className={`group flex items-center rounded-lg px-2.5 py-2 text-sm transition-all duration-150 ${
-                    pathname.includes(chat.id)
-                      ? "bg-white/[0.06] text-foreground"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-                  }`}
-                >
-                  {editingChatId === chat.id ? (
-                    <div className="flex w-full items-center gap-1">
-                      <input
-                        autoFocus
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") submitRename();
-                          if (e.key === "Escape") setEditingChatId(null);
-                        }}
-                        className="flex-1 bg-transparent text-xs outline-none"
-                      />
-                      <button onClick={submitRename} className="rounded p-0.5 hover:bg-white/10"><Check size={12} /></button>
+          <div className="border-t border-white/[0.04] p-3 space-y-3">
+            <div className="space-y-1.5">
+              <p className="px-2 text-[10px] font-semibold text-muted-foreground/40 uppercase tracking-wider">Plans</p>
+              {plans.map((plan) => (
+                <div key={plan.name} className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm glass">
+                  <plan.icon size={14} className={plan.current ? "text-[#dc2626]" : "text-muted-foreground/60"} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium">{plan.name}</span>
+                      <span className="text-[10px] text-muted-foreground/50">{plan.price}</span>
                     </div>
+                  </div>
+                  {plan.current ? (
+                    <span className="text-[10px] text-[#dc2626] font-medium">Current</span>
                   ) : (
-                    <>
-                      <MessageSquare size={14} className="shrink-0 opacity-50" />
-                      <Link
-                        href={`/workspace/${currentWorkspace?.id}/chat/${chat.id}`}
-                        onClick={() => setIsOpen(false)}
-                        className="flex-1 truncate px-2.5 text-[13px]"
-                      >
-                        {chat.title}
-                      </Link>
-                      <div className="hidden group-hover:flex items-center gap-0.5 shrink-0">
-                        <button onClick={() => startRename(chat)} className="rounded p-1 hover:bg-white/10"><Pencil size={11} /></button>
-                        <button onClick={() => { if (confirm("Delete this chat?")) deleteChat.mutate(chat.id); }} className="rounded p-1 hover:bg-white/10 hover:text-red-400"><Trash2 size={11} /></button>
-                      </div>
-                    </>
+                    <button className="text-[10px] text-[#dc2626] hover:underline font-medium">Upgrade</button>
                   )}
                 </div>
               ))}
-              {filteredChats?.length === 0 && (
-                <p className="px-3 py-4 text-xs text-center text-muted-foreground/40">No chats yet</p>
+            </div>
+
+            <div className="space-y-1">
+              <Link
+                href="/settings"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+              >
+                <Settings size={15} />
+                Settings
+              </Link>
+              {authed && (
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+                >
+                  <LogOut size={15} />
+                  Sign Out
+                </button>
               )}
             </div>
-          </div>
-
-          <div className="border-t border-white/[0.04] p-3 space-y-1">
-            <Link
-              href="/settings"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-            >
-              <Settings size={15} />
-              Settings
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
-            >
-              <LogOut size={15} />
-              Sign Out
-            </button>
           </div>
         </div>
       </div>

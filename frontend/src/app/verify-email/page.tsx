@@ -87,54 +87,60 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6 animate-slide-up">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#dc2626] to-[#b91c1c]">
-              <Sparkles size={18} className="text-white" />
+    <div className="auth-bg flex min-h-screen items-center justify-center px-4 relative overflow-hidden">
+      <div className="auth-orb auth-orb-1" />
+      <div className="auth-orb auth-orb-2" />
+      <div className="auth-orb auth-orb-3" />
+
+      <div className="auth-card w-full max-w-sm space-y-6 animate-slide-up relative z-10">
+        <div className="glass-strong rounded-3xl p-8 space-y-6">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#dc2626] to-[#b91c1c] shadow-lg shadow-[#dc2626]/30">
+                <Sparkles size={20} className="text-white" />
+              </div>
             </div>
+            <h1 className="text-2xl font-bold tracking-tight">Noir AI</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Check your email for the verification code</p>
+            {email && <p className="mt-1 text-xs text-muted-foreground/60">{email}</p>}
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Noir AI</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Check your email for the verification code</p>
-          {email && <p className="mt-1 text-xs text-muted-foreground/60">{email}</p>}
-        </div>
 
-        {error && <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400 text-center">{error}</div>}
+          {error && <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400 text-center">{error}</div>}
 
-        <div className="flex justify-center gap-2">
-          {code.map((digit, i) => (
-            <input
-              key={i}
-              ref={(el) => { inputRefs.current[i] = el; }}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleCodeChange(i, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(i, e)}
-              onPaste={i === 0 ? handlePaste : undefined}
-              className="h-12 w-12 rounded-xl glass bg-transparent border-none text-center text-lg font-medium outline-none focus:ring-2 focus:ring-[#dc2626]/30"
-              disabled={loading}
-            />
-          ))}
-        </div>
-
-        {loading && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#dc2626] border-t-transparent" />
-            Verifying...
+          <div className="flex justify-center gap-2">
+            {code.map((digit, i) => (
+              <input
+                key={i}
+                ref={(el) => { inputRefs.current[i] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleCodeChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                onPaste={i === 0 ? handlePaste : undefined}
+                className="h-12 w-12 rounded-xl glass bg-transparent border-none text-center text-lg font-medium outline-none focus:ring-2 focus:ring-[#dc2626]/30 transition-all"
+                disabled={loading}
+              />
+            ))}
           </div>
-        )}
 
-        <div className="text-center">
-          {resendTimer > 0 ? (
-            <p className="text-sm text-muted-foreground/60">Resend code in {resendTimer}s</p>
-          ) : (
-            <button onClick={handleResend} disabled={resending} className="text-sm text-[#dc2626] hover:underline disabled:opacity-50">
-              {resending ? "Sending..." : "Resend code"}
-            </button>
+          {loading && (
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#dc2626] border-t-transparent" />
+              Verifying...
+            </div>
           )}
+
+          <div className="text-center">
+            {resendTimer > 0 ? (
+              <p className="text-sm text-muted-foreground/60">Resend code in {resendTimer}s</p>
+            ) : (
+              <button onClick={handleResend} disabled={resending} className="text-sm text-[#dc2626] hover:underline disabled:opacity-50">
+                {resending ? "Sending..." : "Resend code"}
+              </button>
+            )}
+          </div>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">

@@ -10,6 +10,7 @@ from app.core.exceptions import NotFoundException, ConflictException, Validation
 from app.schemas.auth import UserRegister, UserLogin, TokenResponse, AuthResponse, UserUpdate, RefreshRequest, RegisterResponse
 from app.services.email_service import send_verification_email, generate_code
 import httpx
+import secrets
 
 
 class AuthService:
@@ -22,9 +23,11 @@ class AuthService:
         if existing:
             raise ConflictException("Email already registered")
 
+        name = data.name or data.email.split("@")[0].capitalize()
+
         user = User(
             email=data.email,
-            name=data.name,
+            name=name,
             password_hash=hash_password(data.password),
             auth_provider="email",
             email_verified=False,
@@ -140,6 +143,22 @@ class AuthService:
 
         return TokenResponse(access_token=access_token, refresh_token=new_refresh_token)
 
+    async def create_guest(self) -> AuthResponse:
+        guest_id = secrets.token_hex(8)
+        guest_email = f"guest_{guest_id}@noir.guest"
+        name = f"Guest {guest_id[:4].capitalize()}"
+
+        user = User(
+            email=guest_email,
+            name=name,
+            auth_provider="guest",
+            is_guest=True,
+            email_verified=False,
+        )
+        user = await self.user_repo.create(user)
+
+        return self._make_auth_response_guest(user)
+
     async def _verify_google_token(self, id_token: str) -> dict | None:
         try:
             async with httpx.AsyncClient() as client:
@@ -160,6 +179,17 @@ class AuthService:
             user=user,
             access_token=access_token,
             refresh_token=refresh_token,
+            is_guest=False,
+        )
+
+    def _make_auth_response_guest(self, user: User) -> AuthResponse:
+        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+        refresh_token = create_refresh_token(data={"sub": str(user.id)})
+        return AuthResponse(
+            user=user,
+            access_token=access_token,
+            refresh_token=refresh_token,
+            is_guest=True,
         )
 
 

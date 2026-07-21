@@ -23,6 +23,7 @@ class User(Base):
     auth_provider = Column(String(20), nullable=False, default="email")
     google_id = Column(String(255), unique=True, nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
+    is_guest = Column(Boolean, nullable=False, default=False)
     email_verified = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

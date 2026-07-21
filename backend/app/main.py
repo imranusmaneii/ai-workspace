@@ -25,6 +25,12 @@ async def _migrate_columns(conn):
         ))
     except Exception:
         pass
+    try:
+        await conn.execute(sqlalchemy.text(
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT FALSE"
+        ))
+    except Exception:
+        pass
 
 
 @asynccontextmanager

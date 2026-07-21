@@ -6,12 +6,16 @@ from uuid import UUID
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
-    name: str
+    name: str | None = None
 
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class GuestAuth(BaseModel):
+    pass
 
 
 class GoogleAuth(BaseModel):
@@ -63,3 +67,4 @@ class AuthResponse(BaseModel):
     user: UserResponse
     access_token: str
     refresh_token: str
+    is_guest: bool = False

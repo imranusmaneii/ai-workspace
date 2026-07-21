@@ -7,6 +7,7 @@ from app.schemas.auth import (
     UserRegister, UserLogin, GoogleAuth, AuthResponse,
     TokenResponse, RefreshRequest, UserResponse, UserUpdate,
     VerifyEmailRequest, ResendCodeRequest, RegisterResponse,
+    GuestAuth,
 )
 from app.services.auth_service import AuthService, UserService
 
@@ -41,6 +42,12 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 async def google_auth(data: GoogleAuth, db: AsyncSession = Depends(get_db)):
     service = AuthService(db)
     return await service.google_auth(data.id_token)
+
+
+@router.post("/guest", response_model=AuthResponse)
+async def guest_auth(db: AsyncSession = Depends(get_db)):
+    service = AuthService(db)
+    return await service.create_guest()
 
 
 @router.post("/refresh", response_model=TokenResponse)

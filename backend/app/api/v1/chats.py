@@ -1,12 +1,14 @@
 import json
 import logging
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
 from fastapi.responses import StreamingResponse
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
+from app.models.message import Message
 from app.schemas.chat import ChatCreate, ChatUpdate, ChatResponse, MessageCreate, MessageUpdate, MessageResponse
 from app.services.chat_service import ChatService, MessageService
 from app.utils.chat import stream_chat_response, generate_chat_response
@@ -14,6 +16,8 @@ from app.llm.base import ChatMessage
 
 logger = logging.getLogger("noir_ai.chats")
 router = APIRouter(tags=["chats"])
+
+GUEST_MESSAGE_LIMIT = 10
 
 
 @router.get("/workspaces/{workspace_id}/chats")
@@ -112,6 +116,20 @@ async def send_message(
     db: AsyncSession = Depends(get_db),
 ):
     logger.info(f"Message received: chat_id={chat_id}, stream={data.stream}, content_len={len(data.content)}")
+
+    if user.is_guest:
+        result = await db.execute(
+            select(func.count(Message.id)).where(
+                Message.chat_id == chat_id,
+                Message.role == "user",
+            )
+        )
+        msg_count = result.scalar() or 0
+        if msg_count >= GUEST_MESSAGE_LIMIT:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"You've reached the {GUEST_MESSAGE_LIMIT} message free limit. Sign up to continue chatting.",
+            )
 
     msg_service = MessageService(db)
     user_msg = await msg_service.create_user_message(chat_id, data.content)

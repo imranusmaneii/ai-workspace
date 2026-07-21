@@ -68,6 +68,9 @@ export default function ChatPage({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
+        if (response.status === 403) {
+          throw new Error("LIMIT_REACHED:" + (errorData?.detail || "Free limit reached"));
+        }
         throw new Error(errorData?.detail || `HTTP ${response.status}: Failed to send message`);
       }
 
@@ -147,12 +150,18 @@ export default function ChatPage({
         });
       } else {
         console.error("[Noir AI] Send error:", err);
+        const isLimit = err?.message?.startsWith("LIMIT_REACHED:");
+        const errorMsg = isLimit
+          ? err.message.replace("LIMIT_REACHED:", "")
+          : err.message || "Failed to send message. Check your connection and API configuration.";
         queryClient.setQueryData<Message[]>(["messages", chatId], (old) => {
           if (!old) return old;
           const updated = [...old];
           updated[updated.length - 1] = {
             ...updated[updated.length - 1],
-            content: `Error: ${err.message || "Failed to send message. Check your connection and API configuration."}`,
+            content: isLimit
+              ? `🚫 ${errorMsg}\n\n[Sign up](/register) to continue chatting with unlimited messages.`
+              : `Error: ${errorMsg}`,
           };
           return updated;
         });
