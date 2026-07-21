@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-const GOOGLE_CLIENT_ID = "897981344237-slpl1n53sed77mgc3l2u9q7j7kbd7umk.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
 export default function GoogleSignInButton({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
