@@ -36,3 +36,8 @@ backend/uploads/
 
 # Docker
 docker/data/
+
+# Secrets / project state
+PROJECT_STATE.md
+*.secret.json
+client_secret*.json
