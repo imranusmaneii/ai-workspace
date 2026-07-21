@@ -1,4 +1,4 @@
- AI Workspace
+# AI Workspace
 
 A production-quality AI Workspace platform — inspired by ChatGPT and Claude Projects — built as the foundation of a startup.
 
